@@ -6,7 +6,7 @@ $node_name = "app-server-#{Time.now.strftime("%y-%m-%d-%H-%M")}"
 
 ENV['AWS_ELB_HOME'] = "#{File.expand_path(File.dirname(__FILE__))}/elb-tools"
 ENV['AWS_CREDENTIAL_FILE'] = "#{File.expand_path(File.dirname(__FILE__))}/.chef/aws-credentials"
-File.read(ENV['AWS_CREDENTIAL_FILE']).each do |line|
+File.read(ENV['AWS_CREDENTIAL_FILE']).split("\n").each do |line|
   ENV['AWS_ACCESS_KEY'] = $1 if line =~ /^\s*AWSAccessKeyId\s*=\s*(\S+)/
   ENV['AWS_SECRET_KEY'] = $1 if line =~ /^\s*AWSSecretKey\s*=\s*(\S+)/
 end
@@ -15,26 +15,27 @@ end
 # Load balancer setup
 ####################################
 
-TestLoadBalancer = 'production-test'
-ProductionLoadBalancers = ['prod-elb-1', 'prod-elb-2']
+TestLoadBalancer = 'production-test'                    # The test load balancer that the new-app-servers are hooked into
+ProductionLoadBalancers = ['prod-elb-1', 'prod-elb-2']  # The production load balancers
 
 ####################################
 # App server tags and AMIs
 ####################################
 
-NewAppServerTag = 'new-app-server'
-CurrentAppServerTag = 'hot-app-server'
-AppServerAMI = 'ami-abcd1234'
+CurrentAppServerTag = 'hot-app-server'                  # The tag to use for the current app servers in prod
+NewAppServerTag = 'new-app-server'                      # The tag to use for the new app servers that are created, but not yet in prod
+AppServerAMI = 'ami-abcd1234'                           # The image to use to create the app servers
+AppServerCount = 3                                      # number of app servers to create when running create_new_app_servers
 
 ####################################
 # Tasks
 ####################################
 
-desc "creates 3 new app servers."
+desc "creates N new app servers."
 task  :create_new_app_servers do
   threads = []
   instance_ids = []
-  3.times do |i|
+  AppServerCount.times do |i|
     threads << Thread.new { instance_ids << create_app_server(i) }
     sleep 30 # a bit of breathing room before firing up a new app server
   end
