@@ -1,13 +1,34 @@
 $node_name = "app-server-#{Time.now.strftime("%y-%m-%d-%H-%M")}"
 
-set_aws_env_vars
+####################################
+# Set env vars for the AWS tools
+####################################
+
+ENV['AWS_ELB_HOME'] = "#{File.expand_path(File.dirname(__FILE__))}/elb-tools"
+ENV['AWS_CREDENTIAL_FILE'] = "#{File.expand_path(File.dirname(__FILE__))}/.chef/aws-credentials"
+File.read(ENV['AWS_CREDENTIAL_FILE']).each do |line|
+  ENV['AWS_ACCESS_KEY'] = $1 if line =~ /^\s*AWSAccessKeyId\s*=\s*(\S+)/
+  ENV['AWS_SECRET_KEY'] = $1 if line =~ /^\s*AWSSecretKey\s*=\s*(\S+)/
+end
+
+####################################
+# Load balancer setup
+####################################
 
 TestLoadBalancer = 'production-test'
 ProductionLoadBalancers = ['prod-elb-1', 'prod-elb-2']
 
+####################################
+# App server tags and AMIs
+####################################
+
 NewAppServerTag = 'new-app-server'
 CurrentAppServerTag = 'hot-app-server'
 AppServerAMI = 'ami-abcd1234'
+
+####################################
+# Tasks
+####################################
 
 desc "creates 3 new app servers."
 task  :create_new_app_servers do
@@ -136,13 +157,4 @@ end
 
 def terminate_instances(instance_ids)
   run %Q(./ec2-api-tools/bin/ec2-terminate-instances #{instance_ids.join(' ')})
-end
-
-def set_aws_env_vars
-  ENV['AWS_ELB_HOME'] ||= "#{File.expand_path(File.dirname(__FILE__))}/elb-tools"
-  ENV['AWS_CREDENTIAL_FILE'] ||= "#{File.expand_path(File.dirname(__FILE__))}/aws-credentials"
-  File.read(ENV['AWS_CREDENTIAL_FILE']).each do |line|
-    ENV['AWS_ACCESS_KEY'] ||= $1 if line =~ /^\s*AWSAccessKeyId\s*=\s*(\S+)/
-    ENV['AWS_SECRET_KEY'] ||= $1 if line =~ /^\s*AWSSecretKey\s*=\s*(\S+)/
-  end
 end
