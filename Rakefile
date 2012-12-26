@@ -7,6 +7,7 @@ ProductionLoadBalancers = ['prod-elb-1', 'prod-elb-2']
 
 NewAppServerTag = 'new-app-server'
 CurrentAppServerTag = 'hot-app-server'
+AppServerAMI = 'ami-abcd1234'
 
 desc "creates 3 new app servers."
 task  :create_new_app_servers do
@@ -86,7 +87,7 @@ end
 def create_app_server(server_num)
   log "Creating app server #{server_num}"
   log_path="/tmp/knife-ec2-#{Time.now.to_f}"
-  run %Q(knife ec2 server create -VV -r "role[hybrid-app-server]" --flavor c1.xlarge --image ami-7aea5015 --groups pd-app-server --availability-zone us-east-1d --node-name "#{get_node_name(server_num)}" --ssh-key pd-app-server --ssh-user ec2-user -i ~/.ssh/pd-app-server --distro minimal 2>&1 >> #{log_path})
+  run %Q(knife ec2 server create -VV -r "role[hybrid-app-server]" --flavor c1.xlarge --image #{AppServerAMI} --groups pd-app-server --availability-zone us-east-1d --node-name "#{get_node_name(server_num)}" --ssh-key pd-app-server --ssh-user ec2-user -i ~/.ssh/pd-app-server --distro minimal 2>&1 >> #{log_path})
 
   instance_id = get_instance_ids_from_tags(get_node_name(server_num)).first
   log "Tagging instance #{instance_id}..."
