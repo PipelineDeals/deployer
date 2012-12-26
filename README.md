@@ -56,4 +56,4 @@ An easy way to get the DNS names of your new app servers is something like this:
     require 'rubygems'
     require 'aws-sdk'
     client = AWS::EC2.new(:access_key_id => '<YOUR_ACCESS_KEY>', :secret_access_key => '<YOUR_SECRET_KEY>')
-    ip_addresses = client.instances.tagged_values(tv).map(&:dns_name)
+    ip_addresses = client.instances.tagged_values('new-app-server').map(&:dns_name)
